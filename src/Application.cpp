@@ -33,7 +33,7 @@ constexpr double FADE_OUT_TIME = 1;
 constexpr double FADE_IN_TIME = 2;
 constexpr double ON_SHOW_TIME = 3;
 
-stringstream executeCmd(const string &cmd) {
+static stringstream executeCmd(const string &cmd) {
   auto close = [](FILE *file) { pclose(file); };
   unique_ptr<FILE, decltype(close)> pipe{popen(cmd.c_str(), "r")};
 
@@ -48,7 +48,7 @@ stringstream executeCmd(const string &cmd) {
   return stream;
 }
 
-vector<string> getImagePaths() {
+static vector<string> getImagePaths() {
   const char *cmd = nullptr;
   if ((cmd = getenv("PNG_CMD")) == nullptr) {
     cmd = "find /usr/share/backgrounds -name '*.png'";
@@ -67,21 +67,21 @@ vector<string> getImagePaths() {
   return res;
 }
 
-Window createWindow() {
+static Window createWindow() {
   Window window{string(), 0x1FFF0000, 0x1FFF0000,
                 0, 0, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE};
   return window;
 }
 
-Texture createTextureFromSurface(Renderer &renderer, Surface &surface) {
+static Texture createTextureFromSurface(Renderer &renderer, Surface &surface) {
   return Texture{SDL_CreateTextureFromSurface(renderer.get(), surface.get())};
 }
 
-future<Surface> nextImage(const string &path) {
+static future<Surface> nextImage(const string &path) {
   return async(std::launch::async, [&path]() { return Surface{path}; });
 }
 
-Font creatFont(int size) {
+static Font creatFont(int size) {
   stringstream stream = executeCmd("find /usr/share/fonts -name '*.ttf'");
   string path;
   getline(stream, path);
