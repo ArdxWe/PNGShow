@@ -15,80 +15,89 @@
 #include <string>
 #include <vector>
 
-using std::async;
-using std::cout;
-using std::endl;
-using std::future;
-using std::getenv;
-using std::move;
-using std::runtime_error;
-using std::string;
-using std::stringstream;
-using std::unique_ptr;
-using std::vector;
-using namespace std::string_literals;
-using Rect = Renderer::Rect;
+namespace {
+  using std::async;
+  using std::cout;
+  using std::endl;
+  using std::future;
+  using std::getenv;
+  using std::move;
+  using std::runtime_error;
+  using std::string;
+  using std::stringstream;
+  using std::unique_ptr;
+  using std::vector;
+  using std::put_time;
+  using std::localtime;
+  using std::launch;
+  using std::future_status;
+  using namespace std::string_literals;
+  using Rect = Renderer::Rect;
 
-constexpr double FADE_OUT_TIME = 1;
-constexpr double FADE_IN_TIME = 2;
-constexpr double ON_SHOW_TIME = 3;
+  constexpr double FADE_OUT_TIME = 1;
+  constexpr double FADE_IN_TIME = 2;
+  constexpr double ON_SHOW_TIME = 3;
 
-static stringstream executeCmd(const string &cmd) {
-  auto close = [](FILE *file) { pclose(file); };
-  unique_ptr<FILE, decltype(close)> pipe{popen(cmd.c_str(), "r")};
+  constexpr const char *PNG_ENV = "PNG";
+  constexpr const char *PNG_CMD = "find /usr/share/backgrounds -name '*.png'";
+  constexpr const char *TTF_CMD = "find /usr/share/fonts -name '*.ttf'";
 
-  vector<char> buff(0x100);
-  size_t n;
-  stringstream stream;
+  static stringstream executeCmd(const string &cmd) {
+    auto close = [](FILE *file) { pclose(file); };
+    unique_ptr<FILE, decltype(close)> pipe{popen(cmd.c_str(), "r")};
 
-  while ((n = fread(buff.data(), sizeof(buff[0]), buff.size(), pipe.get())) >
-         0) {
-    stream.write(buff.data(), n);
+    vector<char> buff(0x100);
+    size_t n;
+    stringstream stream;
+
+    while ((n = fread(buff.data(), sizeof(buff[0]), buff.size(), pipe.get())) > 0) {
+      stream.write(buff.data(), n);
+    }
+    return stream;
   }
-  return stream;
-}
 
-static vector<string> getImagePaths() {
-  const char *cmd = nullptr;
-  if ((cmd = getenv("PNG_CMD")) == nullptr) {
-    cmd = "find /usr/share/backgrounds -name '*.png'";
+  static vector<string> getImagePaths() {
+    const char *cmd = nullptr;
+    if ((cmd = getenv(PNG_ENV)) == nullptr) {
+      cmd = PNG_CMD;
+    }
+
+    stringstream stream = executeCmd(string{cmd});
+
+    vector<string> res;
+    string path;
+    while (getline(stream, path)) {
+      res.push_back(move(path));
+    }
+    if (res.size() < 4) {
+      throw runtime_error{"less than four pictures."s};
+    }
+    return res;
   }
 
-  stringstream stream = executeCmd(string{cmd});
-
-  vector<string> res;
-  string path;
-  while (getline(stream, path)) {
-    res.push_back(move(path));
+  static Window createWindow() {
+    Window window{string(), 0x1FFF0000, 0x1FFF0000,
+                  0, 0, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE};
+    return window;
   }
-  if (res.size() < 4) {
-    throw runtime_error{"less than four pictures."s};
+
+  static Texture createTextureFromSurface(Renderer &renderer, Surface &surface) {
+    return Texture{SDL_CreateTextureFromSurface(renderer.get(), surface.get())};
   }
-  return res;
-}
 
-static Window createWindow() {
-  Window window{string(), 0x1FFF0000, 0x1FFF0000,
-                0, 0, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE};
-  return window;
-}
-
-static Texture createTextureFromSurface(Renderer &renderer, Surface &surface) {
-  return Texture{SDL_CreateTextureFromSurface(renderer.get(), surface.get())};
-}
-
-static future<Surface> nextImage(const string &path) {
-  return async(std::launch::async, [&path]() { return Surface{path}; });
-}
-
-static Font creatFont(int size) {
-  stringstream stream = executeCmd("find /usr/share/fonts -name '*.ttf'");
-  string path;
-  getline(stream, path);
-  if (path.empty()) {
-    throw runtime_error{"find no fonts."s};
+  static future<Surface> nextImage(const string &path) {
+    return async(launch::async, [&path]() { return Surface{path}; });
   }
-  return Font{path, size};
+
+  static Font creatFont(int size) {
+    stringstream stream = executeCmd(TTF_CMD);
+    string path;
+    getline(stream, path);
+    if (path.empty()) {
+      throw runtime_error{"find no fonts."s};
+    }
+    return Font{path, size};
+  }
 }
 
 Application::Application()
@@ -102,8 +111,8 @@ Application::Application()
 }
 
 void Application::run() {
-  std::cout << "screen width: " << size_.w << std::endl;
-  std::cout << "screen height: " << size_.h << std::endl;
+  cout << "screen width: " << size_.w << endl;
+  cout << "screen height: " << size_.h << endl;
 
   Font small{creatFont(72)};
   Font big{creatFont(96)};
@@ -139,7 +148,7 @@ void Application::run() {
       case State::FADE_OUT:
         alpha = tm / time_long;
         if (tm < 0 && next_image_.wait_for((std::chrono::seconds) 0) ==
-                              std::future_status::ready) {
+                              future_status::ready) {
           state_ = State::FADE_IN;
           time_long = FADE_IN_TIME;
           i++;
@@ -169,7 +178,7 @@ void Application::run() {
       auto time = std::chrono::system_clock::to_time_t(
               std::chrono::system_clock::now());
       stringstream stream;
-      stream << std::put_time(std::localtime(&time), " %H:%M:%S");
+      stream << put_time(localtime(&time), " %H:%M:%S");
 
       Surface surface{small, stream.str(), {0xFF, 0xFF, 0xFF}};
 
@@ -181,7 +190,7 @@ void Application::run() {
       renderer_.copyTexture(t, src, dst);
 
       stringstream new_stream;
-      new_stream << std::put_time(std::localtime(&time), "%A %F");
+      new_stream << put_time(localtime(&time), "%A %F");
 
       Surface new_surface{big, new_stream.str(), {0xFF, 0xFF, 0xFF}};
 
