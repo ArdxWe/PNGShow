@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.16)
-project(demo)
+project(PNGShow)
 
 set(CMAKE_CXX_STANDARD 20)
 
 add_compile_options(-Wall -Wfatal-errors)
 
-add_executable(demo
+add_executable(PNGShow
                src/main.cpp
                src/Window.cpp
                src/Window.h
@@ -26,7 +26,7 @@ add_executable(demo
                src/Font.cpp
                src/Font.h)
 
-TARGET_LINK_LIBRARIES(demo
+TARGET_LINK_LIBRARIES(PNGShow
                       pthread
                       SDL2
                       SDL2_ttf
