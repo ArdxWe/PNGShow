@@ -28,6 +28,6 @@ $ cmake --build .
 
 ```bash
 $ cd build
-$ export PNG_CMD="path/to/your/png/dir"
+$ export PNG="path/to/your/png/dir"
 $ ./demo
 ```

@@ -3,7 +3,7 @@ project(PNGShow)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_compile_options(-Wall -Wfatal-errors)
+add_compile_options(-Wall -Wextra -Wfatal-errors -O3)
 
 add_executable(PNGShow
                src/main.cpp

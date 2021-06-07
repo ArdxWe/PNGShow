@@ -34,6 +34,7 @@ namespace {
   using namespace std::string_literals;
   using Rect = Renderer::Rect;
 
+  constexpr int FPS = 80;
   constexpr double FADE_OUT_TIME = 1;
   constexpr double FADE_IN_TIME = 2;
   constexpr double ON_SHOW_TIME = 3;
@@ -98,7 +99,7 @@ namespace {
     }
     return Font{path, size};
   }
-}
+} // namespace
 
 Application::Application()
     : paths_{getImagePaths()}, window_{createWindow()}, renderer_{window_},
@@ -120,7 +121,7 @@ void Application::run() {
   bool quit = false;
   SDL_Event e;
   int size = paths_.size(), i = 0;
-  double alpha = 0, tm = 0;
+  double alpha = 0, tm = 0, frame_tm = 0;
   double time_long = FADE_IN_TIME;
   Rect src, dst;
   auto start = std::chrono::high_resolution_clock::now();
@@ -180,7 +181,7 @@ void Application::run() {
       stringstream stream;
       stream << put_time(localtime(&time), " %H:%M:%S");
 
-      Surface surface{small, stream.str(), {0xFF, 0xFF, 0xFF}};
+      Surface surface{small, stream.str(), {0xFF, 0xFF, 0xFF, 0xFF}};
 
       src = {0, 0, surface.getWidth(), surface.getHeight()};
       dst = {size_.w / 8, 6 * size_.h / 8, surface.getWidth(),
@@ -192,7 +193,7 @@ void Application::run() {
       stringstream new_stream;
       new_stream << put_time(localtime(&time), "%A %F");
 
-      Surface new_surface{big, new_stream.str(), {0xFF, 0xFF, 0xFF}};
+      Surface new_surface{big, new_stream.str(), {0xFF, 0xFF, 0xFF, 0xFF}};
 
       src = {0, 0, new_surface.getWidth(), new_surface.getHeight()};
       dst = {size_.w / 8, 6 * size_.h / 8 + surface.getHeight(),
@@ -206,5 +207,10 @@ void Application::run() {
     current_texture_.setAlpha(alpha * 255);
     renderer_.copyAllTexture(current_texture_);
     renderer_.renderPresent();
+
+    frame_tm = std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - now).count();
+    if (frame_tm < 1000 / FPS) {
+      SDL_Delay(1000 / FPS - frame_tm);
+    }
   }
 }
