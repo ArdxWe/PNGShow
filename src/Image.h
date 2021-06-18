@@ -8,9 +8,9 @@
 #include <SDL2/SDL_image.h>
 
 class Image {
-  public:
+ public:
   Image();
   ~Image();
 };
 
-#endif// DEMO_IMAGE_H
+#endif  // DEMO_IMAGE_H

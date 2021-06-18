@@ -6,12 +6,13 @@
 #define DEMO_RENDERER_H
 
 #include <SDL2/SDL.h>
+
 #include <memory>
 
 class Window;
 class Texture;
 class Renderer {
-  public:
+ public:
   struct Rect {
     int x;
     int y;
@@ -26,11 +27,11 @@ class Renderer {
   void copyAllTexture(Texture &texture);
   void renderPresent();
 
-  private:
+ private:
   struct Deleter {
     void operator()(SDL_Renderer *p);
   };
   std::unique_ptr<SDL_Renderer, Deleter> renderer_;
 };
 
-#endif// DEMO_RENDERER_H
+#endif  // DEMO_RENDERER_H

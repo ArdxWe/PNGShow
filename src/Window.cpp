@@ -5,10 +5,12 @@
 #include "Window.h"
 
 #include <SDL2/SDL_video.h>
+
 #include <stdexcept>
 #include <string>
 
-Window::Window(const std::string &title, int x, int y, int w, int h, uint32_t flags)
+Window::Window(const std::string &title, int x, int y, int w, int h,
+               uint32_t flags)
     : window_{SDL_CreateWindow(title.c_str(), x, y, w, h, flags)}, size_{w, h} {
   SDL_SetWindowFullscreen(window_.get(), SDL_WINDOW_FULLSCREEN_DESKTOP);
   if (window_ == nullptr) {

@@ -8,9 +8,9 @@
 #include <SDL2/SDL_ttf.h>
 
 class Ttf {
-  public:
+ public:
   Ttf();
   ~Ttf();
 };
 
-#endif// DEMO_TTF_H
+#endif  // DEMO_TTF_H

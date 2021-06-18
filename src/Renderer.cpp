@@ -3,16 +3,19 @@
 //
 
 #include "Renderer.h"
+
+#include <SDL2/SDL.h>
+
+#include <stdexcept>
+
 #include "Texture.h"
 #include "Window.h"
-#include <SDL2/SDL.h>
-#include <stdexcept>
 
 using std::runtime_error;
 using namespace std::string_literals;
 Renderer::Renderer(const Window &window)
     : renderer_{
-              SDL_CreateRenderer(window.get(), -1, SDL_RENDERER_ACCELERATED)} {
+          SDL_CreateRenderer(window.get(), -1, SDL_RENDERER_ACCELERATED)} {
   if (renderer_ == nullptr) {
     throw runtime_error{"Error call SDL_CreateRenderer: "s + SDL_GetError()};
   }

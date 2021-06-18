@@ -16,95 +16,99 @@
 #include <vector>
 
 namespace {
-  using std::async;
-  using std::cout;
-  using std::endl;
-  using std::future;
-  using std::getenv;
-  using std::move;
-  using std::runtime_error;
-  using std::string;
-  using std::stringstream;
-  using std::unique_ptr;
-  using std::vector;
-  using std::put_time;
-  using std::localtime;
-  using std::launch;
-  using std::future_status;
-  using namespace std::string_literals;
-  using Rect = Renderer::Rect;
+using std::async;
+using std::cout;
+using std::endl;
+using std::future;
+using std::future_status;
+using std::getenv;
+using std::launch;
+using std::localtime;
+using std::move;
+using std::put_time;
+using std::runtime_error;
+using std::string;
+using std::stringstream;
+using std::unique_ptr;
+using std::vector;
+using namespace std::string_literals;
+using Rect = Renderer::Rect;
 
-  constexpr int FPS = 80;
-  constexpr double FADE_OUT_TIME = 1;
-  constexpr double FADE_IN_TIME = 2;
-  constexpr double ON_SHOW_TIME = 3;
+constexpr int FPS = 80;
+constexpr double FADE_OUT_TIME = 1;
+constexpr double FADE_IN_TIME = 2;
+constexpr double ON_SHOW_TIME = 3;
 
-  constexpr const char *PNG_ENV = "PNG";
-  constexpr const char *PNG_CMD = "find /usr/share/backgrounds -name '*.png'";
-  constexpr const char *TTF_CMD = "find /usr/share/fonts -name '*.ttf'";
+constexpr const char *PNG_ENV = "PNG";
+constexpr const char *PNG_CMD = "find /usr/share/backgrounds -name '*.png'";
+constexpr const char *TTF_CMD = "find /usr/share/fonts -name '*.ttf'";
 
-  stringstream executeCmd(const string &cmd) {
-    auto close = [](FILE *file) { pclose(file); };
-    unique_ptr<FILE, decltype(close)> pipe{popen(cmd.c_str(), "r")};
+stringstream executeCmd(const string &cmd) {
+  auto close = [](FILE *file) { pclose(file); };
+  unique_ptr<FILE, decltype(close)> pipe{popen(cmd.c_str(), "r")};
 
-    vector<char> buff(0x100);
-    size_t n;
-    stringstream stream;
+  vector<char> buff(0x100);
+  size_t n;
+  stringstream stream;
 
-    while ((n = fread(buff.data(), sizeof(buff[0]), buff.size(), pipe.get())) > 0) {
-      stream.write(buff.data(), n);
-    }
-    return stream;
+  while ((n = fread(buff.data(), sizeof(buff[0]), buff.size(), pipe.get())) >
+         0) {
+    stream.write(buff.data(), n);
+  }
+  return stream;
+}
+
+vector<string> getImagePaths() {
+  const char *cmd = nullptr;
+  if ((cmd = getenv(PNG_ENV)) == nullptr) {
+    cmd = PNG_CMD;
   }
 
-  vector<string> getImagePaths() {
-    const char *cmd = nullptr;
-    if ((cmd = getenv(PNG_ENV)) == nullptr) {
-      cmd = PNG_CMD;
-    }
+  stringstream stream = executeCmd(string{cmd});
 
-    stringstream stream = executeCmd(string{cmd});
-
-    vector<string> res;
-    string path;
-    while (getline(stream, path)) {
-      res.push_back(move(path));
-    }
-    if (res.size() < 4) {
-      throw runtime_error{"less than four pictures."s};
-    }
-    return res;
+  vector<string> res;
+  string path;
+  while (getline(stream, path)) {
+    res.push_back(move(path));
   }
-
-  Window createWindow() {
-    Window window{string(), 0x1FFF0000, 0x1FFF0000,
-                  0, 0, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE};
-    return window;
+  if (res.size() < 4) {
+    throw runtime_error{"less than four pictures."s};
   }
+  return res;
+}
 
-  Texture createTextureFromSurface(Renderer &renderer, Surface &surface) {
-    return Texture{SDL_CreateTextureFromSurface(renderer.get(), surface.get())};
-  }
+Window createWindow() {
+  Window window{string(), 0x1FFF0000, 0x1FFF0000,
+                0,        0,          SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE};
+  return window;
+}
 
-  future<Surface> nextImage(const string &path) {
-    return async(launch::async, [&path]() { return Surface{path}; });
-  }
+Texture createTextureFromSurface(Renderer &renderer, Surface &surface) {
+  return Texture{SDL_CreateTextureFromSurface(renderer.get(), surface.get())};
+}
 
-  Font creatFont(int size) {
-    stringstream stream = executeCmd(TTF_CMD);
-    string path;
-    getline(stream, path);
-    if (path.empty()) {
-      throw runtime_error{"find no fonts."s};
-    }
-    return Font{path, size};
+future<Surface> nextImage(const string &path) {
+  return async(launch::async, [&path]() { return Surface{path}; });
+}
+
+Font creatFont(int size) {
+  stringstream stream = executeCmd(TTF_CMD);
+  string path;
+  getline(stream, path);
+  if (path.empty()) {
+    throw runtime_error{"find no fonts."s};
   }
-} // namespace
+  return Font{path, size};
+}
+}  // namespace
 
 Application::Application()
-    : paths_{getImagePaths()}, window_{createWindow()}, renderer_{window_},
+    : paths_{getImagePaths()},
+      window_{createWindow()},
+      renderer_{window_},
       image_{nextImage(paths_[0]).get()},
-      next_image_{nextImage(paths_[1])}, size_{window_.getSize()} {
+      next_image_{nextImage(paths_[1])},
+      size_{window_.getSize()} {
   renderer_.setColor(0, 0, 0, 0xFF);
   for (const auto &path : paths_) {
     cout << path << endl;
@@ -135,7 +139,7 @@ void Application::run() {
     now = std::chrono::high_resolution_clock::now();
     tm = time_long -
          std::chrono::duration_cast<std::chrono::duration<double>>(now - start)
-                 .count();
+             .count();
 
     switch (state_) {
       case State::FADE_IN:
@@ -148,8 +152,8 @@ void Application::run() {
         break;
       case State::FADE_OUT:
         alpha = tm / time_long;
-        if (tm < 0 && next_image_.wait_for((std::chrono::seconds) 0) ==
-                              future_status::ready) {
+        if (tm < 0 && next_image_.wait_for((std::chrono::seconds)0) ==
+                          future_status::ready) {
           state_ = State::FADE_IN;
           time_long = FADE_IN_TIME;
           i++;
@@ -177,7 +181,7 @@ void Application::run() {
 
     {
       auto time = std::chrono::system_clock::to_time_t(
-              std::chrono::system_clock::now());
+          std::chrono::system_clock::now());
       stringstream stream;
       stream << put_time(localtime(&time), " %H:%M:%S");
 
@@ -208,7 +212,10 @@ void Application::run() {
     renderer_.copyAllTexture(current_texture_);
     renderer_.renderPresent();
 
-    frame_tm = std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - now).count();
+    frame_tm = std::chrono::duration_cast<std::chrono::duration<double>>(
+                   std::chrono::high_resolution_clock::now() - now)
+                   .count();
+
     if (frame_tm < 1000 / FPS) {
       SDL_Delay(1000 / FPS - frame_tm);
     }

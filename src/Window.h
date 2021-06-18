@@ -6,12 +6,13 @@
 #define DEMO_WINDOW_H
 
 #include <SDL2/SDL.h>
+
 #include <cstdint>
 #include <memory>
 #include <string>
 
 class Window {
-  public:
+ public:
   struct size {
     int w;
     int h;
@@ -20,7 +21,7 @@ class Window {
   [[nodiscard]] SDL_Window *get() const;
   size getSize();
 
-  private:
+ private:
   struct Deleter {
     void operator()(SDL_Window *x);
   };
@@ -28,4 +29,4 @@ class Window {
   size size_;
 };
 
-#endif// DEMO_WINDOW_H
+#endif  // DEMO_WINDOW_H

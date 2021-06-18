@@ -6,12 +6,13 @@
 #define DEMO_APP_H
 
 #include <SDL2/SDL.h>
+
 #include <memory>
 
 class App {
-  public:
+ public:
   App();
   ~App();
 };
 
-#endif// DEMO_APP_H
+#endif  // DEMO_APP_H
