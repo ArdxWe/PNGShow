@@ -5,18 +5,18 @@
 - Use font in `/usr/share/fonts` to show times
 - Click the mouse will end the program
 
-
 ## requirements
 
-- More than four PNGs(default: `/usr/share/backgrounds`)
-- PNG_CMD environment variable(default: `find /usr/share/backgrounds -name '*.png'`)
+- More than four PNGs
+- PNG environment variable(default: `find /usr/share/backgrounds -name '*.png'`)
 - Have fonts in `/usr/share/fonts`
+
 ```bash
 $ sudo apt-get install libsdl2-dev
-$ sudo apt install gcovr
 ```
 
 ## build
+
 ```bash
 $ mkdir build
 $ cd build
@@ -29,5 +29,5 @@ $ cmake --build .
 ```bash
 $ cd build
 $ export PNG="path/to/your/png/dir"
-$ ./demo
+$ ./PNGShow
 ```

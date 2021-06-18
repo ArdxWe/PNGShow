@@ -43,7 +43,7 @@ namespace {
   constexpr const char *PNG_CMD = "find /usr/share/backgrounds -name '*.png'";
   constexpr const char *TTF_CMD = "find /usr/share/fonts -name '*.ttf'";
 
-  static stringstream executeCmd(const string &cmd) {
+  stringstream executeCmd(const string &cmd) {
     auto close = [](FILE *file) { pclose(file); };
     unique_ptr<FILE, decltype(close)> pipe{popen(cmd.c_str(), "r")};
 
@@ -57,7 +57,7 @@ namespace {
     return stream;
   }
 
-  static vector<string> getImagePaths() {
+  vector<string> getImagePaths() {
     const char *cmd = nullptr;
     if ((cmd = getenv(PNG_ENV)) == nullptr) {
       cmd = PNG_CMD;
@@ -76,21 +76,21 @@ namespace {
     return res;
   }
 
-  static Window createWindow() {
+  Window createWindow() {
     Window window{string(), 0x1FFF0000, 0x1FFF0000,
                   0, 0, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE};
     return window;
   }
 
-  static Texture createTextureFromSurface(Renderer &renderer, Surface &surface) {
+  Texture createTextureFromSurface(Renderer &renderer, Surface &surface) {
     return Texture{SDL_CreateTextureFromSurface(renderer.get(), surface.get())};
   }
 
-  static future<Surface> nextImage(const string &path) {
+  future<Surface> nextImage(const string &path) {
     return async(launch::async, [&path]() { return Surface{path}; });
   }
 
-  static Font creatFont(int size) {
+  Font creatFont(int size) {
     stringstream stream = executeCmd(TTF_CMD);
     string path;
     getline(stream, path);
