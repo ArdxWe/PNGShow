@@ -14,10 +14,10 @@ class Texture;
 class Renderer {
  public:
   struct Rect {
-    [[maybe_unused]] int x;
-    [[maybe_unused]] int y;
-    [[maybe_unused]] int width;
-    [[maybe_unused]] int height;
+    int x;
+    int y;
+    int width;
+    int height;
   };
   explicit Renderer(const Window &window);
   void setColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a);

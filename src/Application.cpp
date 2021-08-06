@@ -129,7 +129,7 @@ void Application::run() {
   bool quit = false;
   SDL_Event e;
   int size = static_cast<int>(paths_.size()), i = 0;
-  double alpha, tm, frame_tm;
+  double alpha = 0, tm, frame_tm;
   double time_long = FADE_IN_TIME;
   Rect src, dst;
   auto start = std::chrono::high_resolution_clock::now();
