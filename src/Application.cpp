@@ -44,8 +44,12 @@ constexpr const char *PNG_CMD = "find /usr/share/backgrounds -name '*.png'";
 constexpr const char *TTF_CMD = "find /usr/share/fonts -name '*.ttf'";
 
 stringstream executeCmd(const string &cmd) {
-  auto close = [](FILE *file) { pclose(file); };
-  unique_ptr<FILE, decltype(close)> pipe{popen(cmd.c_str(), "r")};
+  struct Close {
+    void operator()(FILE* file) {
+      pclose(file);
+    }
+  };
+  unique_ptr<FILE, Close> pipe{popen(cmd.c_str(), "r")};
 
   vector<char> buff(0x100);
   size_t n;
@@ -53,13 +57,13 @@ stringstream executeCmd(const string &cmd) {
 
   while ((n = fread(buff.data(), sizeof(buff[0]), buff.size(), pipe.get())) >
          0) {
-    stream.write(buff.data(), n);
+    stream.write(buff.data(), static_cast<std::streamsize>(n));
   }
   return stream;
 }
 
 vector<string> getImagePaths() {
-  const char *cmd = nullptr;
+  const char *cmd;
   if ((cmd = getenv(PNG_ENV)) == nullptr) {
     cmd = PNG_CMD;
   }
@@ -124,12 +128,12 @@ void Application::run() {
 
   bool quit = false;
   SDL_Event e;
-  int size = paths_.size(), i = 0;
-  double alpha = 0, tm = 0, frame_tm = 0;
+  int size = static_cast<int>(paths_.size()), i = 0;
+  double alpha, tm, frame_tm;
   double time_long = FADE_IN_TIME;
   Rect src, dst;
   auto start = std::chrono::high_resolution_clock::now();
-  auto now = start;
+  decltype(start) now;
   while (!quit) {
     while (SDL_PollEvent(&e) != 0) {
       if (e.type == SDL_QUIT || e.type == SDL_MOUSEBUTTONDOWN) {
@@ -208,7 +212,7 @@ void Application::run() {
 
     current_texture_ = createTextureFromSurface(renderer_, image_);
     current_texture_.setBlendMode(SDL_BLENDMODE_BLEND);
-    current_texture_.setAlpha(alpha * 255);
+    current_texture_.setAlpha(static_cast<uint8_t>(alpha * 255));
     renderer_.copyAllTexture(current_texture_);
     renderer_.renderPresent();
 
@@ -216,8 +220,8 @@ void Application::run() {
                    std::chrono::high_resolution_clock::now() - now)
                    .count();
 
-    if (frame_tm < 1000 / FPS) {
-      SDL_Delay(1000 / FPS - frame_tm);
+    if (frame_tm < 1000.0 / FPS) {
+      SDL_Delay(static_cast<Uint32>(1000.0 / FPS - frame_tm));
     }
   }
 }

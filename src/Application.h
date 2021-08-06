@@ -25,9 +25,9 @@ class Application {
   void run();
 
  private:
-  App app_{};
-  Image image_app_{};
-  Ttf ttf_app_{};
+  [[maybe_unused]] App app_{};
+  [[maybe_unused]] Image image_app_{};
+  [[maybe_unused]] Ttf ttf_app_{};
   std::vector<std::string> paths_;
   Window window_;
   Renderer renderer_;
